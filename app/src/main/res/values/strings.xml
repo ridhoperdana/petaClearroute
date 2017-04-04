@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">CobaClearroute</string>
+    <string name="access_token">pk.eyJ1IjoiY3luYzQ4IiwiYSI6ImNpenp2Z2dmYzAwNmYzMnAwd2VxMWc5dnEifQ.StA6TH7t7PJQQn0u6ykhcA</string>
+    <string name="style_peta">mapbox://styles/cync48/cizzwah8h00jj2smw98spnptj</string>
+</resources>
