@@ -21,11 +21,13 @@ import com.cocoahero.android.geojson.GeoJSON;
 import com.cocoahero.android.geojson.GeoJSONObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
+import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -120,10 +122,25 @@ public class MainActivity extends AppCompatActivity {
 
     private Icon markerIcon(String golongan)
     {
+        Drawable iconDrawable = null;
         IconFactory iconFactory = IconFactory.getInstance(MainActivity.this);
-        Drawable iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.mipmap.location_blue);
+        if(golongan.equals("target"))
+        {
+            iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.mipmap.location_blue);
+        }
+        else if(golongan.equals("berawan"))
+        {
+            iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.mipmap.cuaca_berawan);
+        }
+        else if(golongan.equals("cerah"))
+        {
+            iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.mipmap.cuaca_cerah);
+        }
+        else if(golongan.equals("hujan_ringan"))
+        {
+            iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.mipmap.cuaca_hujan_ringan);
+        }
         Icon icon = iconFactory.fromDrawable(iconDrawable);
-
         return icon;
     }
 
@@ -144,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void getRoute(LatLng latLngAsal, LatLng latLngTujuan)
     {
-        StringBuilder urlbaru = new StringBuilder("http://riset.alpro.if.its.ac.id/clearroute/public/index.php/getroute/");
+        StringBuilder urlbaru = new StringBuilder("http://riset.alpro.if.its.ac.id/clearroute/public/index.php/getroutecuaca/");
         urlbaru.append(latLngAsal.getLongitude()+"/");
         urlbaru.append(latLngAsal.getLatitude()+"/");
         urlbaru.append(latLngTujuan.getLongitude()+"/");
@@ -158,65 +175,194 @@ public class MainActivity extends AppCompatActivity {
         GetRoute service = retrofit.create(GetRoute.class);
         Call<JsonElement> call = service.getRoute(urlbaru.toString());
         Log.d("url= ", urlbaru.toString());
-//        json_asli = new Geojson();
-//        Json json_1 = new Json();
 
         call.enqueue(new Callback<JsonElement>() {
             @Override
             public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
 //                Log.d("masuk response", response.body().toString());
                 JsonElement jsonElement = response.body();
-                JsonArray jsonArray = jsonElement.getAsJsonArray();
-                JsonArray jsonArray1 = jsonArray.get(0).getAsJsonArray();
-                JsonArray jsonArray2 = jsonArray.get(1).getAsJsonArray();
-                JsonArray jsonArray3 = jsonArray.get(2).getAsJsonArray();
-//                drawPolyline(jsonArray);
+                JsonObject jsonArray = jsonElement.getAsJsonObject();
+                JsonArray jsonArray1 = jsonArray.get("0").getAsJsonArray();
+                JsonArray jsonArray2 = jsonArray.get("1").getAsJsonArray();
+                JsonArray jsonArray3 = jsonArray.get("2").getAsJsonArray();
+                JsonArray jsonArray1_cuaca = jsonArray.get("cuaca1").getAsJsonArray();
+                JsonArray jsonArray2_cuaca = jsonArray.get("cuaca2").getAsJsonArray();
+                JsonArray jsonArray3_cuaca = jsonArray.get("cuaca3").getAsJsonArray();
+                Log.d("array: ", String.valueOf(jsonArray1_cuaca.size()));
                 for(int a = 0; a < jsonArray1.size(); a++)
                 {
                     try {
                         JSONObject jsonobject = new JSONObject(jsonArray1.get(a).getAsJsonObject().get("json").getAsString());
                         JSONObject jsonobjectgeometry = new JSONObject(jsonobject.get("geometry").toString());
-
-                        Geometry geometry = new Geometry();
-                        ArrayList<String> geocoordinate = new ArrayList<String>();
                         String string_geocoordinates = jsonobjectgeometry.get("coordinates").toString();
 
                         JSONArray array_geocoordinate = new JSONArray(string_geocoordinates);
+//                        Log.d("i: ", String.valueOf(array_geocoordinate.length()));
                         for(int i=0; i<array_geocoordinate.length(); i++)
                         {
-//                            Log.d("koordinat: "+String.valueOf(a)+ " -> ", array_geocoordinate.get(i).toString());
-                            geocoordinate.add(array_geocoordinate.get(i).toString());
-                            String[] koordinat = array_geocoordinate.get(i).toString().split(",");
-//                            Log.d(koordinat[0].split("\\[")[1] + ",", koordinat[1].split("\\]")[0]);
-//                            Log.d("y: ", koordinat[1].split("\\]")[0]);
-                            LatLng koordinat_baru = new LatLng(Double.valueOf(koordinat[1].split("\\]")[0]), Double.valueOf(koordinat[0].split("\\[")[1]));
-//                            Position pos = Position.fromCoordinates(Double.valueOf(koordinat[0].split("\\[")[1]), Double.valueOf(koordinat[1].split("\\]")[0]));
-//                            if(!latLngs.contains(koordinat_baru))
-//                            {
-                                Log.d(koordinat[0].split("\\[")[1] + ",", koordinat[1].split("\\]")[0]);
-                                latLngs.add(koordinat_baru);
-//                            }
-//                            ArrayList<LatLng> coor = new ArrayList<LatLng>(new LinkedHashSet<LatLng>(latLngs));
-//                            latLngs.clear();
-//                            latLngs.addAll(coor);
+                            JSONArray coord = array_geocoordinate.getJSONArray(i);
+                            LatLng latLng = new LatLng(coord.getDouble(1), coord.getDouble(0));
+                            latLngs.add(latLng);
                         }
-                        json_1.setType(jsonobject.get("type").toString());
-                        geometry.setType(jsonobjectgeometry.get("type").toString());
-                        geometry.setCoordinates(geocoordinate);
-                        json_1.setGeometry(geometry);
-//                            Log.d("jsonobject: ", jsonobject.get("type").toString());
+                            map.addPolyline(new PolylineOptions()
+                                    .addAll(latLngs)
+                                    .color(Color.parseColor("#757575"))
+                                    .width(2));
+                        latLngs.clear();
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
 
-                json_asli.setFeatures(json_1);
+                for(int a = 0; a < jsonArray2.size(); a++)
+                {
+                    try {
+                        JSONObject jsonobject = new JSONObject(jsonArray2.get(a).getAsJsonObject().get("json").getAsString());
+                        JSONObject jsonobjectgeometry = new JSONObject(jsonobject.get("geometry").toString());
+                        String string_geocoordinates = jsonobjectgeometry.get("coordinates").toString();
+
+                        JSONArray array_geocoordinate = new JSONArray(string_geocoordinates);
+//                        Log.d("i: ", String.valueOf(array_geocoordinate.length()));
+                        for(int i=0; i<array_geocoordinate.length(); i++)
+                        {
+                            JSONArray coord = array_geocoordinate.getJSONArray(i);
+                            LatLng latLng = new LatLng(coord.getDouble(1), coord.getDouble(0));
+                            latLngs.add(latLng);
+                        }
+                        map.addPolyline(new PolylineOptions()
+                                .addAll(latLngs)
+                                .color(Color.parseColor("#757575"))
+                                .width(2));
+                        latLngs.clear();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                for(int a = 0; a < jsonArray3.size(); a++)
+                {
+                    try {
+                        JSONObject jsonobject = new JSONObject(jsonArray3.get(a).getAsJsonObject().get("json").getAsString());
+                        JSONObject jsonobjectgeometry = new JSONObject(jsonobject.get("geometry").toString());
+                        String string_geocoordinates = jsonobjectgeometry.get("coordinates").toString();
+
+                        JSONArray array_geocoordinate = new JSONArray(string_geocoordinates);
+//                        Log.d("i: ", String.valueOf(array_geocoordinate.length()));
+                        for(int i=0; i<array_geocoordinate.length(); i++)
+                        {
+                            JSONArray coord = array_geocoordinate.getJSONArray(i);
+                            LatLng latLng = new LatLng(coord.getDouble(1), coord.getDouble(0));
+                            latLngs.add(latLng);
+                        }
+                        map.addPolyline(new PolylineOptions()
+                                .addAll(latLngs)
+                                .color(Color.parseColor("#3bb2d0"))
+                                .width(2));
+                        latLngs.clear();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                for(int c = 0; c <jsonArray1_cuaca.size()-1 ; c++)
+                {
+                    try {
+                        Log.d("ramalan 1: ", jsonArray1_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString());
+                        Double lat = Double.valueOf(jsonArray1_cuaca.get(c).getAsJsonObject().get("y").getAsString());
+                        Double longt = Double.valueOf(jsonArray1_cuaca.get(c).getAsJsonObject().get("x").getAsString());
+                        String ket_ramalan = jsonArray1_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString();
+                        if(ket_ramalan.equals("1"))
+                        {
+                            map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(lat, longt))
+                                    .title("Cuaca Berawan")
+                                    .icon(markerIcon("berawan")));
+                        }
+                        else if(ket_ramalan.equals("0"))
+                        {
+                            map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(lat, longt))
+                                    .title("Cuaca Cerah")
+                                    .icon(markerIcon("cerah")));
+                        }
+                        else if(ket_ramalan.equals("2"))
+                        {
+                            map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(lat, longt))
+                                    .title("Cuaca Hujan Ringan")
+                                    .icon(markerIcon("hujan_ringan")));
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                for(int c = 0; c <jsonArray2_cuaca.size()-1 ; c++)
+                {
+                    try {
+                        Log.d("ramalan 2: ", jsonArray2_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString());
+                        Double lat = Double.valueOf(jsonArray2_cuaca.get(c).getAsJsonObject().get("y").getAsString());
+                        Double longt = Double.valueOf(jsonArray2_cuaca.get(c).getAsJsonObject().get("x").getAsString());
+                        String ket_ramalan = jsonArray2_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString();
+                        if(ket_ramalan.equals("1"))
+                        {
+                            map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(lat, longt))
+                                    .title("Cuaca Berawan")
+                                    .icon(markerIcon("berawan")));
+                        }
+                        else if(ket_ramalan.equals("0"))
+                        {
+                            map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(lat, longt))
+                                    .title("Cuaca Cerah")
+                                    .icon(markerIcon("cerah")));
+                        }
+                        else if(ket_ramalan.equals("2"))
+                        {
+                            map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(lat, longt))
+                                    .title("Cuaca Hujan Ringan")
+                                    .icon(markerIcon("hujan_ringan")));
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                for(int c = 0; c <jsonArray3_cuaca.size()-1 ; c++)
+                {
+                    try {
+                        Log.d("ramalan 3: ", jsonArray3_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString());
+                        Double lat = Double.valueOf(jsonArray3_cuaca.get(c).getAsJsonObject().get("y").getAsString());
+                        Double longt = Double.valueOf(jsonArray3_cuaca.get(c).getAsJsonObject().get("x").getAsString());
+                        String ket_ramalan = jsonArray3_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString();
+                        if(ket_ramalan.equals("1"))
+                        {
+                            map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(lat, longt))
+                                    .title("Cuaca Berawan")
+                                    .icon(markerIcon("berawan")));
+                        }
+                        else if(ket_ramalan.equals("0"))
+                        {
+                            map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(lat, longt))
+                                    .title("Cuaca Cerah")
+                                    .icon(markerIcon("cerah")));
+                        }
+                        else if(ket_ramalan.equals("2"))
+                        {
+                            map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(lat, longt))
+                                    .title("Cuaca Hujan Ringan")
+                                    .icon(markerIcon("hujan_ringan")));
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
 //                drawSimplify(latLngs);
-                map.addPolyline(new PolylineOptions()
-                        .addAll(latLngs)
-                        .color(Color.parseColor("#3bb2d0"))
-                        .width(2));
-//                Log.d("json asli: ", json_1.getGeometry().getType());
             }
 
             @Override
@@ -246,7 +392,7 @@ public class MainActivity extends AppCompatActivity {
 //        map.addPolyline(new PolylineOptions()
 //                .addAll(coor)
 //                .color(Color.parseColor("#3bb2d0"))
-//                .width(2));
+//                .width(dua));
 //
 //    }
 
