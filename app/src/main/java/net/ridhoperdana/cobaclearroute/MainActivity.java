@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void getRoute(LatLng latLngAsal, LatLng latLngTujuan)
     {
-        StringBuilder urlbaru = new StringBuilder("http://riset.alpro.if.its.ac.id/clearroute/public/index.php/getroutecuaca/");
+        StringBuilder urlbaru = new StringBuilder("http://riset.alpro.if.its.ac.id/clearroute/public/index.php/getroutecuaca1/");
         urlbaru.append(latLngAsal.getLongitude()+"/");
         urlbaru.append(latLngAsal.getLatitude()+"/");
         urlbaru.append(latLngTujuan.getLongitude()+"/");
@@ -206,8 +206,8 @@ public class MainActivity extends AppCompatActivity {
                         }
                             map.addPolyline(new PolylineOptions()
                                     .addAll(latLngs)
-                                    .color(Color.parseColor("#757575"))
-                                    .width(2));
+                                    .color(Color.parseColor("#3bb2d0"))
+                                    .width(4));
                         latLngs.clear();
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -232,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
                         map.addPolyline(new PolylineOptions()
                                 .addAll(latLngs)
                                 .color(Color.parseColor("#757575"))
-                                .width(2));
+                                .width(4));
                         latLngs.clear();
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -256,8 +256,8 @@ public class MainActivity extends AppCompatActivity {
                         }
                         map.addPolyline(new PolylineOptions()
                                 .addAll(latLngs)
-                                .color(Color.parseColor("#3bb2d0"))
-                                .width(2));
+                                .color(Color.parseColor("#757575"))
+                                .width(4));
                         latLngs.clear();
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -267,10 +267,10 @@ public class MainActivity extends AppCompatActivity {
                 for(int c = 0; c <jsonArray1_cuaca.size()-1 ; c++)
                 {
                     try {
-                        Log.d("ramalan 1: ", jsonArray1_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString());
+                        Log.d("ramalan 1: ", jsonArray1_cuaca.get(c).getAsJsonObject().get("kategori").getAsString());
                         Double lat = Double.valueOf(jsonArray1_cuaca.get(c).getAsJsonObject().get("y").getAsString());
                         Double longt = Double.valueOf(jsonArray1_cuaca.get(c).getAsJsonObject().get("x").getAsString());
-                        String ket_ramalan = jsonArray1_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString();
+                        String ket_ramalan = jsonArray1_cuaca.get(c).getAsJsonObject().get("kategori").getAsString();
                         if(ket_ramalan.equals("1"))
                         {
                             map.addMarker(new MarkerOptions()
@@ -300,10 +300,10 @@ public class MainActivity extends AppCompatActivity {
                 for(int c = 0; c <jsonArray2_cuaca.size()-1 ; c++)
                 {
                     try {
-                        Log.d("ramalan 2: ", jsonArray2_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString());
+//                        Log.d("ramalan 2: ", jsonArray2_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString());
                         Double lat = Double.valueOf(jsonArray2_cuaca.get(c).getAsJsonObject().get("y").getAsString());
                         Double longt = Double.valueOf(jsonArray2_cuaca.get(c).getAsJsonObject().get("x").getAsString());
-                        String ket_ramalan = jsonArray2_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString();
+                        String ket_ramalan = jsonArray2_cuaca.get(c).getAsJsonObject().get("kategori").getAsString();
                         if(ket_ramalan.equals("1"))
                         {
                             map.addMarker(new MarkerOptions()
@@ -333,10 +333,10 @@ public class MainActivity extends AppCompatActivity {
                 for(int c = 0; c <jsonArray3_cuaca.size()-1 ; c++)
                 {
                     try {
-                        Log.d("ramalan 3: ", jsonArray3_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString());
+                        Log.d("ramalan 3: ", jsonArray3_cuaca.get(c).getAsJsonObject().get("kategori").getAsString());
                         Double lat = Double.valueOf(jsonArray3_cuaca.get(c).getAsJsonObject().get("y").getAsString());
                         Double longt = Double.valueOf(jsonArray3_cuaca.get(c).getAsJsonObject().get("x").getAsString());
-                        String ket_ramalan = jsonArray3_cuaca.get(c).getAsJsonObject().get("ramalan").getAsString();
+                        String ket_ramalan = jsonArray3_cuaca.get(c).getAsJsonObject().get("kategori").getAsString();
                         if(ket_ramalan.equals("1"))
                         {
                             map.addMarker(new MarkerOptions()
