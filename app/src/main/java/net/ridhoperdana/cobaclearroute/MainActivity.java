@@ -103,18 +103,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Set up autocomplete widget
+        // Deklarasi fungsi Geocoder MapboxAPI
         GeocoderAutoCompleteView autocomplete = (GeocoderAutoCompleteView) findViewById(R.id.autocomplete);
+
+        // Memanggil akses token mapbox api
         autocomplete.setAccessToken(MapboxAccountManager.getInstance().getAccessToken());
+
         autocomplete.setType(GeocodingCriteria.TYPE_POI);
         autocomplete.setOnFeatureListener(new GeocoderAutoCompleteView.OnFeatureListener() {
             @Override
             public void OnFeatureClick(CarmenFeature feature) {
                 Position position = feature.asPosition();
-//                Log.d("x: " + position.getLongitude() + "y: ", String.valueOf(position.getLatitude()));
-//                Log.d("x_asal: " + String.valueOf(asal_lokasi.getLongitude()) + "y_asal: ", String.valueOf(asal_lokasi.getLatitude()));
+                //mendapatkan koordinat tujuan
                 target_lokasi = new LatLng(position.getLatitude(), position.getLongitude());
+
+                //memperbaharui peta agar menampilkan lokasi tujuan
                 updateMap(position.getLatitude(), position.getLongitude());
+
+                //memanggil fungsi pencarian rute
                 getRoute(asal_lokasi, target_lokasi);
             }
         });
@@ -130,15 +136,15 @@ public class MainActivity extends AppCompatActivity {
         }
         else if(golongan.equals("berawan"))
         {
-            iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.mipmap.cuaca_berawan);
+            iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.mipmap.cuaca_berawan_2);
         }
         else if(golongan.equals("cerah"))
         {
-            iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.mipmap.cuaca_cerah);
+            iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.mipmap.cuaca_cerah_2);
         }
         else if(golongan.equals("hujan_ringan"))
         {
-            iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.mipmap.cuaca_hujan_ringan);
+            iconDrawable = ContextCompat.getDrawable(MainActivity.this, R.mipmap.cuaca_hujan_ringan_2);
         }
         Icon icon = iconFactory.fromDrawable(iconDrawable);
         return icon;
@@ -161,14 +167,24 @@ public class MainActivity extends AppCompatActivity {
 
     private void getRoute(LatLng latLngAsal, LatLng latLngTujuan)
     {
+        //pemanggilan url dari Clearroute API
         StringBuilder urlbaru = new StringBuilder("http://riset.alpro.if.its.ac.id/clearroute/public/index.php/getroutecuaca1/");
+
+        //memanggil longitude asal
         urlbaru.append(latLngAsal.getLongitude()+"/");
+
+        //memanggil latitude asal
         urlbaru.append(latLngAsal.getLatitude()+"/");
+
+        //memanggil longitude tujuan
         urlbaru.append(latLngTujuan.getLongitude()+"/");
+
+        //memanggil latitude asal
         urlbaru.append(latLngTujuan.getLatitude()+"/");
 
+        //deklarasi fungsi retrofit
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://ridhoperdana.net")
+                .baseUrl("http://clearroute.net")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
@@ -179,7 +195,6 @@ public class MainActivity extends AppCompatActivity {
         call.enqueue(new Callback<JsonElement>() {
             @Override
             public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
-//                Log.d("masuk response", response.body().toString());
                 JsonElement jsonElement = response.body();
                 JsonObject jsonArray = jsonElement.getAsJsonObject();
                 JsonArray jsonArray1 = jsonArray.get("0").getAsJsonArray();
@@ -188,29 +203,85 @@ public class MainActivity extends AppCompatActivity {
                 JsonArray jsonArray1_cuaca = jsonArray.get("cuaca1").getAsJsonArray();
                 JsonArray jsonArray2_cuaca = jsonArray.get("cuaca2").getAsJsonArray();
                 JsonArray jsonArray3_cuaca = jsonArray.get("cuaca3").getAsJsonArray();
+                Double weight_cuaca1 = 0.0;
+                Double weight_cuaca2 = 0.0;
+                Double weight_cuaca3 = 0.0;
+                int cek_cuaca1 = 0;
+                int cek_cuaca2 = 0;
+                int cek_cuaca3 = 0;
+                int cek_jalur1 = 0;
+                int cek_jalur2 = 0;
+                int cek_jalur3 = 0;
                 Log.d("array: ", String.valueOf(jsonArray1_cuaca.size()));
-                for(int a = 0; a < jsonArray1.size(); a++)
+
+                for(int c = 0; c <jsonArray1_cuaca.size()-1 ; c++)
                 {
                     try {
-                        JSONObject jsonobject = new JSONObject(jsonArray1.get(a).getAsJsonObject().get("json").getAsString());
-                        JSONObject jsonobjectgeometry = new JSONObject(jsonobject.get("geometry").toString());
-                        String string_geocoordinates = jsonobjectgeometry.get("coordinates").toString();
-
-                        JSONArray array_geocoordinate = new JSONArray(string_geocoordinates);
-//                        Log.d("i: ", String.valueOf(array_geocoordinate.length()));
-                        for(int i=0; i<array_geocoordinate.length(); i++)
-                        {
-                            JSONArray coord = array_geocoordinate.getJSONArray(i);
-                            LatLng latLng = new LatLng(coord.getDouble(1), coord.getDouble(0));
-                            latLngs.add(latLng);
-                        }
-                            map.addPolyline(new PolylineOptions()
-                                    .addAll(latLngs)
-                                    .color(Color.parseColor("#3bb2d0"))
-                                    .width(4));
-                        latLngs.clear();
-                    } catch (JSONException e) {
+                        Log.d("weight 1: ", jsonArray1_cuaca.get(jsonArray1_cuaca.size()-1).getAsJsonObject().get("weightcurr").getAsString());
+                        Double weightcurr = Double.valueOf(jsonArray1_cuaca.get(jsonArray1_cuaca.size()-1).getAsJsonObject().get("weightcurr").getAsString());
+//                        Double weightforecast = Double.valueOf(jsonArray1_cuaca.get(c).getAsJsonObject().get("weightfrcst").getAsString());
+                        weight_cuaca1 = weightcurr;
+                        Log.d("weight 1: ", String.valueOf(weight_cuaca1));
+                    } catch (Exception e) {
                         e.printStackTrace();
+                    }
+                }
+
+                for(int c = 0; c <jsonArray2_cuaca.size()-1 ; c++)
+                {
+                    try {
+                        Log.d("weight 2: ", jsonArray2_cuaca.get(jsonArray2_cuaca.size()-1).getAsJsonObject().get("weightcurr").getAsString());
+                        Double weightcurr = Double.valueOf(jsonArray2_cuaca.get(jsonArray2_cuaca.size()-1).getAsJsonObject().get("weightcurr").getAsString());
+//                        Double weightforecast = Double.valueOf(jsonArray2_cuaca.get(c).getAsJsonObject().get("weightfrcst").getAsString());
+                        weight_cuaca2 = weightcurr;
+                        Log.d("weight 2: ", String.valueOf(weight_cuaca2));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                for(int c = 0; c <jsonArray3_cuaca.size()-1 ; c++)
+                {
+                    try {
+                        Log.d("weight 3: ", jsonArray3_cuaca.get(jsonArray3_cuaca.size()-1).getAsJsonObject().get("weightcurr").getAsString());
+                        Double weightcurr = Double.valueOf(jsonArray3_cuaca.get(jsonArray3_cuaca.size()-1).getAsJsonObject().get("weightcurr").getAsString());
+//                        Double weightforecast = Double.valueOf(jsonArray3_cuaca.get(c).getAsJsonObject().get("weightfrcst").getAsString());
+                        weight_cuaca3 = weightcurr;
+                        Log.d("weight 3: ", String.valueOf(weight_cuaca3));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                for(int i = 0; i<2; i++)
+                {
+                    if(weight_cuaca1 < weight_cuaca2 && weight_cuaca2 < weight_cuaca3)
+                    {
+                        cek_cuaca1 = 1;
+                    }
+                    else if(weight_cuaca2 < weight_cuaca1 && weight_cuaca2 < weight_cuaca3)
+                    {
+                        cek_cuaca2 = 1;
+                    }
+                    else if(weight_cuaca3 < weight_cuaca1 && weight_cuaca3 < weight_cuaca2)
+                    {
+                        cek_cuaca3 = 1;
+                    }
+                }
+
+                for(int i = 0; i<2; i++)
+                {
+                    if(jsonArray1.size() < jsonArray2.size() && jsonArray2.size() < jsonArray3.size())
+                    {
+                        cek_jalur1 = 1;
+                    }
+                    else if(jsonArray2.size() < jsonArray1.size() && jsonArray2.size() < jsonArray3.size())
+                    {
+                        cek_jalur2 = 1;
+                    }
+                    else if(jsonArray3.size() < jsonArray1.size() && jsonArray3.size() < jsonArray2.size())
+                    {
+                        cek_jalur3 = 1;
                     }
                 }
 
@@ -229,10 +300,27 @@ public class MainActivity extends AppCompatActivity {
                             LatLng latLng = new LatLng(coord.getDouble(1), coord.getDouble(0));
                             latLngs.add(latLng);
                         }
-                        map.addPolyline(new PolylineOptions()
-                                .addAll(latLngs)
-                                .color(Color.parseColor("#757575"))
-                                .width(4));
+                        if(cek_cuaca2==1 || cek_jalur2==1)
+                        {
+                            map.addPolyline(new PolylineOptions()
+                                    .addAll(latLngs)
+                                    .color(Color.parseColor("#3bb2d0"))
+                                    .width(4));
+                        }
+                        else if(cek_jalur2==1)
+                        {
+                            map.addPolyline(new PolylineOptions()
+                                    .addAll(latLngs)
+                                    .color(Color.parseColor("#3bb2d0"))
+                                    .width(4));
+                        }
+                        else
+                        {
+                            map.addPolyline(new PolylineOptions()
+                                    .addAll(latLngs)
+                                    .color(Color.parseColor("#757575"))
+                                    .width(4));
+                        }
                         latLngs.clear();
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -254,10 +342,69 @@ public class MainActivity extends AppCompatActivity {
                             LatLng latLng = new LatLng(coord.getDouble(1), coord.getDouble(0));
                             latLngs.add(latLng);
                         }
-                        map.addPolyline(new PolylineOptions()
-                                .addAll(latLngs)
-                                .color(Color.parseColor("#757575"))
-                                .width(4));
+                        if(cek_cuaca3==1 || cek_jalur3==1)
+                        {
+                            map.addPolyline(new PolylineOptions()
+                                    .addAll(latLngs)
+                                    .color(Color.parseColor("#3bb2d0"))
+                                    .width(4));
+                        }
+                        else if(cek_jalur3==1)
+                        {
+                            map.addPolyline(new PolylineOptions()
+                                    .addAll(latLngs)
+                                    .color(Color.parseColor("#3bb2d0"))
+                                    .width(4));
+                        }
+                        else
+                        {
+                            map.addPolyline(new PolylineOptions()
+                                    .addAll(latLngs)
+                                    .color(Color.parseColor("#757575"))
+                                    .width(4));
+                        }
+                        latLngs.clear();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                for(int a = 0; a < jsonArray1.size(); a++)
+                {
+                    try {
+                        JSONObject jsonobject = new JSONObject(jsonArray1.get(a).getAsJsonObject().get("json").getAsString());
+                        JSONObject jsonobjectgeometry = new JSONObject(jsonobject.get("geometry").toString());
+                        String string_geocoordinates = jsonobjectgeometry.get("coordinates").toString();
+
+                        JSONArray array_geocoordinate = new JSONArray(string_geocoordinates);
+//                        Log.d("i: ", String.valueOf(array_geocoordinate.length()));
+                        for(int i=0; i<array_geocoordinate.length(); i++)
+                        {
+                            JSONArray coord = array_geocoordinate.getJSONArray(i);
+                            LatLng latLng = new LatLng(coord.getDouble(1), coord.getDouble(0));
+                            latLngs.add(latLng);
+                        }
+                        if(cek_cuaca1==1 || cek_jalur1==1)
+                        {
+                            map.addPolyline(new PolylineOptions()
+                                    .addAll(latLngs)
+                                    .color(Color.parseColor("#3bb2d0"))
+                                    .width(4));
+                        }
+                        else if(cek_jalur1==1)
+                        {
+                            map.addPolyline(new PolylineOptions()
+                                    .addAll(latLngs)
+                                    .color(Color.parseColor("#3bb2d0"))
+                                    .width(4));
+                        }
+                        else
+                        {
+                            map.addPolyline(new PolylineOptions()
+                                    .addAll(latLngs)
+                                    .color(Color.parseColor("#757575"))
+                                    .width(4));
+                        }
                         latLngs.clear();
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -271,26 +418,30 @@ public class MainActivity extends AppCompatActivity {
                         Double lat = Double.valueOf(jsonArray1_cuaca.get(c).getAsJsonObject().get("y").getAsString());
                         Double longt = Double.valueOf(jsonArray1_cuaca.get(c).getAsJsonObject().get("x").getAsString());
                         String ket_ramalan = jsonArray1_cuaca.get(c).getAsJsonObject().get("kategori").getAsString();
+//                        MarkerViewOptions markerViewOptions = new MarkerViewOptions();
                         if(ket_ramalan.equals("1"))
                         {
-                            map.addMarker(new MarkerOptions()
+                            map.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(lat, longt))
                                     .title("Cuaca Berawan")
-                                    .icon(markerIcon("berawan")));
+                                    .icon(markerIcon("berawan"))
+                                    .alpha(255));
                         }
                         else if(ket_ramalan.equals("0"))
                         {
-                            map.addMarker(new MarkerOptions()
+                            map.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(lat, longt))
                                     .title("Cuaca Cerah")
-                                    .icon(markerIcon("cerah")));
+                                    .icon(markerIcon("cerah"))
+                                    .alpha(255));
                         }
                         else if(ket_ramalan.equals("2"))
                         {
-                            map.addMarker(new MarkerOptions()
+                            map.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(lat, longt))
                                     .title("Cuaca Hujan Ringan")
-                                    .icon(markerIcon("hujan_ringan")));
+                                    .icon(markerIcon("hujan_ringan"))
+                                    .alpha(255));
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -304,26 +455,50 @@ public class MainActivity extends AppCompatActivity {
                         Double lat = Double.valueOf(jsonArray2_cuaca.get(c).getAsJsonObject().get("y").getAsString());
                         Double longt = Double.valueOf(jsonArray2_cuaca.get(c).getAsJsonObject().get("x").getAsString());
                         String ket_ramalan = jsonArray2_cuaca.get(c).getAsJsonObject().get("kategori").getAsString();
+//                        if(ket_ramalan.equals("1"))
+//                        {
+//                            map.addMarker(new MarkerOptions()
+//                                    .position(new LatLng(lat, longt))
+//                                    .title("Cuaca Berawan")
+//                                    .icon(markerIcon("berawan")));
+//                        }
+//                        else if(ket_ramalan.equals("0"))
+//                        {
+//                            map.addMarker(new MarkerOptions()
+//                                    .position(new LatLng(lat, longt))
+//                                    .title("Cuaca Cerah")
+//                                    .icon(markerIcon("cerah")));
+//                        }
+//                        else if(ket_ramalan.equals("2"))
+//                        {
+//                            map.addMarker(new MarkerOptions()
+//                                    .position(new LatLng(lat, longt))
+//                                    .title("Cuaca Hujan Ringan")
+//                                    .icon(markerIcon("hujan_ringan")));
+//                        }
                         if(ket_ramalan.equals("1"))
                         {
-                            map.addMarker(new MarkerOptions()
+                            map.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(lat, longt))
                                     .title("Cuaca Berawan")
-                                    .icon(markerIcon("berawan")));
+                                    .icon(markerIcon("berawan"))
+                                    .alpha(255));
                         }
                         else if(ket_ramalan.equals("0"))
                         {
-                            map.addMarker(new MarkerOptions()
+                            map.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(lat, longt))
                                     .title("Cuaca Cerah")
-                                    .icon(markerIcon("cerah")));
+                                    .icon(markerIcon("cerah"))
+                                    .alpha(255));
                         }
                         else if(ket_ramalan.equals("2"))
                         {
-                            map.addMarker(new MarkerOptions()
+                            map.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(lat, longt))
                                     .title("Cuaca Hujan Ringan")
-                                    .icon(markerIcon("hujan_ringan")));
+                                    .icon(markerIcon("hujan_ringan"))
+                                    .alpha(255));
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -337,26 +512,50 @@ public class MainActivity extends AppCompatActivity {
                         Double lat = Double.valueOf(jsonArray3_cuaca.get(c).getAsJsonObject().get("y").getAsString());
                         Double longt = Double.valueOf(jsonArray3_cuaca.get(c).getAsJsonObject().get("x").getAsString());
                         String ket_ramalan = jsonArray3_cuaca.get(c).getAsJsonObject().get("kategori").getAsString();
+//                        if(ket_ramalan.equals("1"))
+//                        {
+//                            map.addMarker(new MarkerOptions()
+//                                    .position(new LatLng(lat, longt))
+//                                    .title("Cuaca Berawan")
+//                                    .icon(markerIcon("berawan")));
+//                        }
+//                        else if(ket_ramalan.equals("0"))
+//                        {
+//                            map.addMarker(new MarkerOptions()
+//                                    .position(new LatLng(lat, longt))
+//                                    .title("Cuaca Cerah")
+//                                    .icon(markerIcon("cerah")));
+//                        }
+//                        else if(ket_ramalan.equals("2"))
+//                        {
+//                            map.addMarker(new MarkerOptions()
+//                                    .position(new LatLng(lat, longt))
+//                                    .title("Cuaca Hujan Ringan")
+//                                    .icon(markerIcon("hujan_ringan")));
+//                        }
                         if(ket_ramalan.equals("1"))
                         {
-                            map.addMarker(new MarkerOptions()
+                            map.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(lat, longt))
                                     .title("Cuaca Berawan")
-                                    .icon(markerIcon("berawan")));
+                                    .icon(markerIcon("berawan"))
+                                    .alpha(255));
                         }
                         else if(ket_ramalan.equals("0"))
                         {
-                            map.addMarker(new MarkerOptions()
+                            map.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(lat, longt))
                                     .title("Cuaca Cerah")
-                                    .icon(markerIcon("cerah")));
+                                    .icon(markerIcon("cerah"))
+                                    .alpha(255));
                         }
                         else if(ket_ramalan.equals("2"))
                         {
-                            map.addMarker(new MarkerOptions()
+                            map.addMarker(new MarkerViewOptions()
                                     .position(new LatLng(lat, longt))
                                     .title("Cuaca Hujan Ringan")
-                                    .icon(markerIcon("hujan_ringan")));
+                                    .icon(markerIcon("hujan_ringan"))
+                                    .alpha(255));
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -371,6 +570,132 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+//    private void getRoute(LatLng latLngAsal, LatLng latLngTujuan)
+//    {
+//        //pemanggilan url dari Clearroute API
+//        StringBuilder urlbaru = new StringBuilder("http://riset.alpro.if.its.ac.id/clearroute/public/index.php/getroutecuaca1/");
+//
+//        //memanggil longitude asal
+//        urlbaru.append(latLngAsal.getLongitude()+"/");
+//
+//        //memanggil latitude asal
+//        urlbaru.append(latLngAsal.getLatitude()+"/");
+//
+//        //memanggil longitude tujuan
+//        urlbaru.append(latLngTujuan.getLongitude()+"/");
+//
+//        //memanggil latitude asal
+//        urlbaru.append(latLngTujuan.getLatitude()+"/");
+//
+//        //deklarasi fungsi retrofit
+//        Retrofit retrofit = new Retrofit.Builder()
+//                .baseUrl("http://clearroute.net")
+//                .addConverterFactory(GsonConverterFactory.create())
+//                .build();
+//
+//        GetRoute service = retrofit.create(GetRoute.class);
+//        Call<JsonElement> call = service.getRoute(urlbaru.toString());
+//        Log.d("url= ", urlbaru.toString());
+//
+//        call.enqueue(new Callback<JsonElement>() {
+//            @Override
+//            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+//                //menerima response ke dalam Json Element
+//                JsonElement jsonElement = response.body();
+//                JsonObject jsonArray = jsonElement.getAsJsonObject();
+//
+//                //mendapatkan rute utama
+//                JsonArray jsonArray1 = jsonArray.get("0").getAsJsonArray();
+//
+//                //mendapatkan rute alternatif 1
+//                JsonArray jsonArray2 = jsonArray.get("1").getAsJsonArray();
+//
+//                //mendapatkan rute alternatif 2
+//                JsonArray jsonArray3 = jsonArray.get("2").getAsJsonArray();
+//
+//                //perulangan penggambaran rute utama
+//                for(int a = 0; a < jsonArray1.size(); a++)
+//                {
+//                    try {
+//                        JSONObject jsonobject = new JSONObject(jsonArray1.get(a).getAsJsonObject().get("json").getAsString());
+//                        JSONObject jsonobjectgeometry = new JSONObject(jsonobject.get("geometry").toString());
+//                        String string_geocoordinates = jsonobjectgeometry.get("coordinates").toString();
+//
+//                        JSONArray array_geocoordinate = new JSONArray(string_geocoordinates);
+//                        for(int i=0; i<array_geocoordinate.length(); i++)
+//                        {
+//                            JSONArray coord = array_geocoordinate.getJSONArray(i);
+//                            LatLng latLng = new LatLng(coord.getDouble(1), coord.getDouble(0));
+//                            latLngs.add(latLng);
+//                        }
+//                        map.addPolyline(new PolylineOptions()
+//                                .addAll(latLngs)
+//                                .color(Color.parseColor("#3bb2d0"))
+//                                .width(4));
+//                        latLngs.clear();
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//
+//                //perulangan penggambaran rute alternatif 1
+//                for(int a = 0; a < jsonArray2.size(); a++)
+//                {
+//                    try {
+//                        JSONObject jsonobject = new JSONObject(jsonArray2.get(a).getAsJsonObject().get("json").getAsString());
+//                        JSONObject jsonobjectgeometry = new JSONObject(jsonobject.get("geometry").toString());
+//                        String string_geocoordinates = jsonobjectgeometry.get("coordinates").toString();
+//
+//                        JSONArray array_geocoordinate = new JSONArray(string_geocoordinates);
+//                        for(int i=0; i<array_geocoordinate.length(); i++)
+//                        {
+//                            JSONArray coord = array_geocoordinate.getJSONArray(i);
+//                            LatLng latLng = new LatLng(coord.getDouble(1), coord.getDouble(0));
+//                            latLngs.add(latLng);
+//                        }
+//                        map.addPolyline(new PolylineOptions()
+//                                .addAll(latLngs)
+//                                .color(Color.parseColor("#757575"))
+//                                .width(4));
+//                        latLngs.clear();
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//
+//                //perulangan penggambaran rute alternatif 2
+//                for(int a = 0; a < jsonArray3.size(); a++)
+//                {
+//                    try {
+//                        JSONObject jsonobject = new JSONObject(jsonArray3.get(a).getAsJsonObject().get("json").getAsString());
+//                        JSONObject jsonobjectgeometry = new JSONObject(jsonobject.get("geometry").toString());
+//                        String string_geocoordinates = jsonobjectgeometry.get("coordinates").toString();
+//
+//                        JSONArray array_geocoordinate = new JSONArray(string_geocoordinates);
+//                        for(int i=0; i<array_geocoordinate.length(); i++)
+//                        {
+//                            JSONArray coord = array_geocoordinate.getJSONArray(i);
+//                            LatLng latLng = new LatLng(coord.getDouble(1), coord.getDouble(0));
+//                            latLngs.add(latLng);
+//                        }
+//                        map.addPolyline(new PolylineOptions()
+//                                .addAll(latLngs)
+//                                .color(Color.parseColor("#757575"))
+//                                .width(4));
+//                        latLngs.clear();
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//
+//            @Override
+//            public void onFailure(Call<JsonElement> call, Throwable t) {
+//                Log.d("gagal response", t.toString());
+//            }
+//        });
+//    }
 
 //    private void drawSimplify(ArrayList<Position> points) {
 //
@@ -598,43 +923,54 @@ public class MainActivity extends AppCompatActivity {
 
     private void getLocation()
     {
+        //memanggil servis lokasi android
         manager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        //pengecekan apakah gps sudah diaktifkan
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            //pemanggilan fungsi aktifasi gps
             buildAlertMessageNoGps();
         }
 
+        //pengecekkan perijinan akses lokasi
         if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         try{
+            //mengambil lokasi dari gps
             mLastLocation = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             if (mLastLocation == null){
+                //mengambil lokasi dari jaringan layanan telepon
                 mLastLocation = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                 if(mLastLocation==null)
                 {
+                    //mengambil lokasi terbaru lewat gps
                     manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (LocationListener) this);
                     mLastLocation = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 }
             }
+            //debug latitude longitude
             else if (mLastLocation != null)
                 Log.d("Location : ","Lat = "+ mLastLocation.getLatitude() + " Lng");
         }catch (Exception e)
         {
+            //apabila gagal mendapat lokasi
             Log.d("Gagal lokasi terbaru", "fail");
         }
     }
 
     private void buildAlertMessageNoGps() {
+        //membuat alert dialog
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+        builder.setMessage("GPS tidak aktif, tolong aktifkan GPS anda")
                 .setCancelable(false)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Ya", new DialogInterface.OnClickListener() {
                     public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
                         startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                         finish();
                     }
                 })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                .setNegativeButton("Tidak", new DialogInterface.OnClickListener() {
                     public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
                         dialog.cancel();
                     }
